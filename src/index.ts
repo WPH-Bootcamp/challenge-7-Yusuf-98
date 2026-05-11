@@ -20,104 +20,118 @@
 // Hint: Gunakan recursive function atau while loop
 
 // TODO: Jalankan fungsi main
+
+/**
+ * (User Interface) yang berinteraksi langsung dengan pengguna lewat terminal.
+ */
 console.log('Welcome to TypeScript To-Do App!');
 console.log('Start building your app here...');
 
-import readline from 'readline';
-import { TodoService } from './todoService.js';
+import * as readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
+import { initializeStorage, loadTodos } from './storage';
+import { addTodo, toggleTodo, deleteTodo, displayAllTodos, searchTodos } from './todoService';
+import { isValidString } from './utils';
 
-const service = new TodoService();
+// Menyiapkan interface komunikasi terminal
+const rl = readline.createInterface({ input, output });
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+/**
+ * Fungsi utama yang berjalan dalam loop (selama isRunning = true)
+ */
+const mainMenu = async () => {
+  initializeStorage(); // Memastikan folder/file siap saat aplikasi dibuka
+  console.log("\n🎉 Selamat datang di TypeScript To-Do App!");
 
-function question(query: string): Promise<string> {
-  return new Promise(resolve => rl.question(query, resolve));
-}
+  let isRunning = true;
+  while (isRunning) {
+    // Menampilkan Menu Utama
+    console.log("\n=== TO-DO APP by YUSUF AR ===");
+    console.log("1. ➕ Add      (Tambah Tugas Baru)");
+    console.log("2. ✅ Complete (Tandai Selesai)");
+    console.log("3. 🗑️  Delete   (Hapus Tugas)");
+    console.log("4. 📋 List     (Tampilkan Semua Tugas)");
+    console.log("5. 🔍 Search   (Cari Tugas)");
+    console.log("6. 🚪 Exit");
+    console.log("========================");
 
-function showMenu(): void {
-  console.log('\n' + '='.repeat(50));
-  console.log('          TODO APP - TypeScript');
-  console.log('='.repeat(50));
-  console.log('1. Tambah Todo Baru');
-  console.log('2. Tampilkan Semua Todo');
-  console.log('3. Tandai Selesai');
-  console.log('4. Hapus Todo');
-  console.log('5. Keluar');
-  console.log('='.repeat(50));
-}
-
-async function listTodos(): Promise<void> {
-  const todos = service.list();
-
-  if (todos.length === 0) {
-    console.log('\nBelum ada todo. Silakan tambahkan todo baru!');
-    return;
-  }
-
-  console.log('\nDaftar Todo:');
-  todos.forEach(todo => {
-    const status = todo.completed ? '[DONE]' : '[ACTIVE]';
-    console.log(`${status}  ${todo.id}. ${todo.title}`);
-  });
-}
-
-async function main() {
-  console.log('Selamat datang di Todo App TypeScript!\n');
-
-  while (true) {
-    showMenu();
-    const choice = await question('Pilih menu (1-5): ');
-
-    try {
-      switch (choice.trim()) {
-        case '1': {
-          const title = await question('Masukkan judul todo: ');
-          const todo = service.add(title);
-          console.log(`Berhasil ditambahkan! ID: ${todo.id}`);
-          break;
+    const choice = await rl.question("Pilih menu (1-6): ");
+    const currentTodos = loadTodos(); // Mengambil data terbaru dari storage
+    switch (choice) {
+      case '1': { // TAMBAH TUGAS BARU
+        let taskInput = "";
+        while (true) {
+          taskInput = await rl.question("Masukkan tugas baru: ");
+          if (isValidString(taskInput)) break;
+          console.log("❌ Tugas tidak boleh kosong!");
         }
-
-        case '2':
-          await listTodos();
-          break;
-
-        case '3': {
-          await listTodos();
-          const idStr = await question('\nMasukkan ID yang ingin ditandai selesai: ');
-          const id = parseInt(idStr);
-          if (isNaN(id)) throw new Error('ID harus berupa angka');
-          service.markComplete(id);
-          console.log(`Todo ID ${id} berhasil ditandai selesai!`);
-          break;
-        }
-
-        case '4': {
-          await listTodos();
-          const idStr = await question('\nMasukkan ID yang ingin dihapus: ');
-          const id = parseInt(idStr);
-          if (isNaN(id)) throw new Error('ID harus berupa angka');
-          service.delete(id);
-          console.log(`Todo ID ${id} berhasil dihapus!`);
-          break;
-        }
-
-        case '5':
-          console.log('\nTerima kasih telah menggunakan Todo App!');
-          rl.close();
-          return;
-
-        default:
-          console.log('Pilihan tidak valid. Silakan pilih angka 1 sampai 5.');
+        await addTodo({ text: taskInput });
+        break;
       }
-    } catch (error: any) {
-      console.error(`Error: ${error.message}`);
+
+      // Penggabungan case '2' dan case '3' karena banyak persamaan
+      case '2': // TANDAI SELESAI ATAU ACTIVE
+      case '3': { // HAPUS
+        if (currentTodos.length === 0) {
+          console.log("\n📭 Daftar tugas masih kosong.");
+          break;
+        }
+
+        displayAllTodos(currentTodos); // Munculkan daftar agar user bisa pilih nomor
+        const action = choice === '2' ? "ditandai selesai" : "dihapus";
+        const successMsg = choice === '2' 
+          ? "✅ Tugas berhasil ditandai selesai!" 
+          : "🗑️ Tugas berhasil dihapus!";
+
+        // Fungsi untuk menampilkan (1) dan bukan (1-1) 
+        const range = currentTodos.length === 1 ? "(1)" : `(1-${currentTodos.length})`;
+        const inputNum = await rl.question(`\nPilih nomor ${range} untuk ${action} atau 0 untuk batal: `);
+        
+        if (inputNum === '0') break;
+        const idx = parseInt(inputNum) - 1;
+
+        // Validasi apakah nomor yang dimasukkan ada di daftar
+        if (idx >= 0 && idx < currentTodos.length) {
+          const selectedId = currentTodos[idx].id;
+          const ok = choice === '2' ? await toggleTodo(selectedId) : await deleteTodo(selectedId);
+          if (ok) console.log(successMsg);
+        } else {
+          console.log(`❌ Nomor tidak valid!`);
+        }
+        break;
+      }
+
+      case '4': // TAMPILKAN SEMUA TUGAS
+        displayAllTodos();
+        break;
+
+      case '5': // CARI TUGAS
+        const keyword = await rl.question("Masukkan kata kunci pencarian: ");
+        if (!isValidString(keyword)) {
+          console.log("❌ Kata kunci tidak boleh kosong.");
+          break;
+        }
+        const results = await searchTodos(keyword);
+        results.length 
+          ? displayAllTodos(results, `HASIL PENCARIAN: "${keyword}"`)
+          : console.log(`🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`);
+        break;
+
+      case '6': // KELUAR
+        console.log("👋 Terima kasih telah menggunakan To-Do App. Sampai jumpa!");
+        isRunning = false;
+        break;
+
+      default:
+        console.log("❌ Pilihan tidak valid. Silakan pilih 1-6.");
     }
-
-    console.log(''); // spacing
   }
-}
+  // readline close
+  rl.close();
+};
 
-main().catch(console.error);
+// Menjalankan program utama
+mainMenu().catch((err) => {
+  console.error("❌ Terjadi kesalahan sistem:", err);
+  process.exit(1);
+});

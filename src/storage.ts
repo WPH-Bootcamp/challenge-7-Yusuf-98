@@ -11,49 +11,56 @@ import * as path from 'path';
 
 // TODO: Buat fungsi untuk inisialisasi storage (buat file kosong jika belum ada)
 
-import { Todo } from './types.js';
-import { isTodoArray } from './utils.js';
 
-const DATA_DIR = path.resolve('data');
-const DATA_FILE = path.join(DATA_DIR, 'todos.json');
+/**
+ * Bagian ini mengatur bagaimana data disimpan ke dalam file fisik agar tidak hilang saat aplikasi ditutup.
+ */
+import { Todo } from './types';
+import { isTodoArray } from './utils';
 
-export function ensureDataDir(): void {
+// Menentukan lokasi folder 'data' dan file 'todos.json'
+const DATA_DIR = path.resolve(__dirname, '../data');
+const FILE_PATH = path.resolve(DATA_DIR, 'todos.json');
+
+/**
+ * Menyiapkan folder dan file database jika belum ada di komputer
+ */
+export function initializeStorage() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log('Folder "data" berhasil dibuat.');
-  }
-}
-
-export function loadTodos(): Todo[] {
-  ensureDataDir();
-
-  if (!fs.existsSync(DATA_FILE)) {
-    return [];
+    console.log("📁 Folder data berhasil dibuat.");
   }
 
-  try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-
-    if (isTodoArray(parsed)) {
-      return parsed;
-    } else {
-      console.warn('Data JSON tidak valid, mengembalikan array kosong.');
-      return [];
-    }
-  } catch (error) {
-    console.error('Gagal membaca file todos.json:', error);
-    return [];
+  if (!fs.existsSync(FILE_PATH)) {
+    // Membuat file JSON kosong berisi array [] jika belum ada
+    fs.writeFileSync(FILE_PATH, JSON.stringify([], null, 2), 'utf-8');
+    console.log("📄 File todos.json berhasil dibuat.");
   }
-}
+};
 
+/**
+ * Menyimpan daftar tugas ke file JSON
+ */
 export function saveTodos(todos: Todo[]): void {
-  ensureDataDir();
-
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(todos, null, 2));
-  } catch (error) {
-    console.error('Gagal menyimpan todos:', error);
-    throw new Error('Gagal menyimpan data ke file');
+    fs.writeFileSync(FILE_PATH, JSON.stringify(todos, null, 2), 'utf-8');
+  } catch (err) {
+    console.error("❌ Gagal menyimpan data:", err);
   }
-}
+};
+
+/**
+ * Membaca daftar tugas dari file JSON
+ */
+export function loadTodos(): Todo[] {
+  try {
+    if (!fs.existsSync(FILE_PATH)) return [];
+    const data = fs.readFileSync(FILE_PATH, 'utf-8');
+    const parsed = JSON.parse(data);
+    // Memvalidasi data yang dibaca menggunakan type guard di utils.ts
+    return isTodoArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("⚠️ Gagal membaca file, menggunakan data kosong.");
+    return [];
+  }
+};
