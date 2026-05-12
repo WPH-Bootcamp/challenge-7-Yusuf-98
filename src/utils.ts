@@ -15,23 +15,15 @@ import { Todo } from './types';
  * Menggunakan 'unknown' lebih aman daripada 'any' karena memaksa pengecekan tipe
  */
 export function isTodo(item: unknown): item is Todo {
-  if (typeof item !== 'object' || item === null) {
-    console.log("Item bukan object");
-    return false;
-  }
+  if (typeof item !== 'object' || item === null) return false;
 
   const todo = item as Todo;
-  const isValid = 
+  return (
     typeof todo.id === 'string' &&
-    typeof todo.text === 'string' && 
-    (todo.status === 'active' || todo.status === 'completed') &&
-    typeof todo.createdAt === 'string';
-
-  if (!isValid) {
-    console.log("Validasi properti gagal pada:", item);
-  }
-
-  return isValid;
+    typeof todo.text === 'string' &&
+    (todo.statusCompleted === 'active' || todo.statusCompleted === 'done') &&
+    typeof todo.createdAt === 'string'
+  );
 }
 
 /**
@@ -39,29 +31,27 @@ export function isTodo(item: unknown): item is Todo {
  */
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
-  return d.toLocaleString('id-ID', {
-    day: '2-digit',
+  // Mengambil komponen tanggal dengan bahasa Indonesia
+  const datePart = d.toLocaleDateString('id-ID', {
+    day: 'numeric',
     month: 'short',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
   });
-};
+
+  // Mengambil komponen waktu (jam dan menit)
+  const timePart = d.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23', // Memastikan format 24 jam secara konsisten
+  }); 
+
+  return `${datePart}, pukul: ${timePart} WIB`;
+}
 
 // Memastikan item-item / items adalah daftar (array) berisi objek Todo yang valid
 export function isTodoArray(items: unknown): items is Todo[] {
-  if (!Array.isArray(items)) {
-    console.warn("Validasi Gagal: Data bukan sebuah array.");
-    return false;
-  }
-
-  const allValid = items.every(isTodo);
-
-  if (!allValid) {
-    console.warn("Validasi Gagal: Ada salah satu item yang bukan Todo yang valid.");
-    return false;
-  }
-  return true;
+  if (!Array.isArray(items)) return false;
+  return items.every(isTodo);
 }
 
 /**

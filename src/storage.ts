@@ -56,11 +56,14 @@ export function loadTodos(): Todo[] {
   try {
     if (!fs.existsSync(FILE_PATH)) return [];
     const data = fs.readFileSync(FILE_PATH, 'utf-8');
+
+    if (!data.trim()) return [];
+
     const parsed = JSON.parse(data);
     // Memvalidasi data yang dibaca menggunakan type guard di utils.ts
     return isTodoArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error("⚠️ Gagal membaca file, menggunakan data kosong.");
+    console.error("⚠️ File database rusak atau tidak valid. Menggunakan data kosong.");
     return [];
   }
 };

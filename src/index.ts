@@ -30,73 +30,88 @@ console.log('Start building your app here...');
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { initializeStorage, loadTodos } from './storage';
-import { addTodo, toggleTodo, deleteTodo, displayAllTodos, searchTodos } from './todoService';
+import {
+  addTodo,
+  toggleTodo,
+  deleteTodo,
+  displayAllTodos,
+  searchTodos,
+} from './todoService';
 import { isValidString } from './utils';
 
-// Menyiapkan interface komunikasi terminal
+// Inisialisasi storage sekali di awal
+initializeStorage();
+
 const rl = readline.createInterface({ input, output });
 
 /**
- * Fungsi utama yang berjalan dalam loop (selama isRunning = true)
+ * Fungsi utama yang berjalan dalam loop
  */
 const mainMenu = async () => {
-  initializeStorage(); // Memastikan folder/file siap saat aplikasi dibuka
-  console.log("\n🎉 Selamat datang di TypeScript To-Do App!");
+  console.log('\n🎉 Selamat datang di TypeScript To-Do App!');
 
   let isRunning = true;
   while (isRunning) {
-    // Menampilkan Menu Utama
-    console.log("\n=== TO-DO APP by YUSUF AR ===");
-    console.log("1. ➕ Add      (Tambah Tugas Baru)");
-    console.log("2. ✅ Complete (Tandai Selesai)");
-    console.log("3. 🗑️  Delete   (Hapus Tugas)");
-    console.log("4. 📋 List     (Tampilkan Semua Tugas)");
-    console.log("5. 🔍 Search   (Cari Tugas)");
-    console.log("6. 🚪 Exit");
-    console.log("========================");
+    console.log('\n=== TO-DO APP by YUSUF AR ===');
+    console.log('1. ➕ Add      (Tambah Tugas Baru)');
+    console.log('2. ✅ Status   (Ubah Status Tugas)');
+    console.log('3. 🗑️  Delete   (Hapus Tugas)');
+    console.log('4. 📋 List     (Tampilkan Semua Tugas)');
+    console.log('5. 🔍 Search   (Cari Tugas)');
+    console.log('6. 🚪 Exit');
+    console.log('========================');
 
-    const choice = await rl.question("Pilih menu (1-6): ");
-    const currentTodos = loadTodos(); // Mengambil data terbaru dari storage
+    const choice = await rl.question('Pilih menu (1-6): ');
+    const currentTodos = loadTodos();
+
     switch (choice) {
-      case '1': { // TAMBAH TUGAS BARU
-        let taskInput = "";
+      case '1': {
+        // TAMBAH TUGAS BARU
+        let taskInput = '';
         while (true) {
-          taskInput = await rl.question("Masukkan tugas baru: ");
+          taskInput = await rl.question('Masukkan tugas baru: ');
           if (isValidString(taskInput)) break;
-          console.log("❌ Tugas tidak boleh kosong!");
+          console.log('❌ Tugas tidak boleh kosong!');
         }
-        await addTodo({ text: taskInput });
+
+        addTodo({ text: taskInput });
         break;
       }
 
-      // Penggabungan case '2' dan case '3' karena banyak persamaan
-      case '2': // TANDAI SELESAI ATAU ACTIVE
-      case '3': { // HAPUS
+      case '2': // UBAH STATUS TUGAS
+      case '3': {
+        // HAPUS TUGAS
         if (currentTodos.length === 0) {
-          console.log("\n📭 Daftar tugas masih kosong.");
+          console.log('\n📭 Daftar tugas masih kosong.');
           break;
         }
 
-        displayAllTodos(currentTodos); // Munculkan daftar agar user bisa pilih nomor
-        const action = choice === '2' ? "ditandai selesai" : "dihapus";
-        const successMsg = choice === '2' 
-          ? "✅ Tugas berhasil ditandai selesai!" 
-          : "🗑️ Tugas berhasil dihapus!";
+        displayAllTodos(currentTodos);
 
-        // Fungsi untuk menampilkan (1) dan bukan (1-1) 
-        const range = currentTodos.length === 1 ? "(1)" : `(1-${currentTodos.length})`;
-        const inputNum = await rl.question(`\nPilih nomor ${range} untuk ${action} atau 0 untuk batal: `);
-        
-        if (inputNum === '0') break;
+        const action =
+          choice === '2'
+            ? 'diubah statusnya ([ACTIVE] <--> [DONE])'
+            : 'menghapus tugas';
+
+        const range =
+          currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
+        const inputNum = await rl.question(
+          `\nPilih nomor ${range} untuk ${action} atau 0 untuk batal: `
+        );
+
         const idx = parseInt(inputNum) - 1;
+        if (isNaN(idx) || idx < -1 || idx >= currentTodos.length) {
+          console.log('❌ Input harus berupa angka yang tersedia di daftar!');
+          break;
+        }
+        if (idx === -1) break;
 
-        // Validasi apakah nomor yang dimasukkan ada di daftar
-        if (idx >= 0 && idx < currentTodos.length) {
-          const selectedId = currentTodos[idx].id;
-          const ok = choice === '2' ? await toggleTodo(selectedId) : await deleteTodo(selectedId);
-          if (ok) console.log(successMsg);
+        const selectedId = currentTodos[idx].id;
+
+        if (choice === '2') {
+          toggleTodo(selectedId);
         } else {
-          console.log(`❌ Nomor tidak valid!`);
+          deleteTodo(selectedId);
         }
         break;
       }
@@ -105,33 +120,49 @@ const mainMenu = async () => {
         displayAllTodos();
         break;
 
-      case '5': // CARI TUGAS
-        const keyword = await rl.question("Masukkan kata kunci pencarian: ");
+      case '5': {
+        // CARI TUGAS
+        const keyword = await rl.question('Masukkan kata kunci pencarian: ');
         if (!isValidString(keyword)) {
-          console.log("❌ Kata kunci tidak boleh kosong.");
+          console.log('❌ Kata kunci tidak boleh kosong.');
           break;
         }
-        const results = await searchTodos(keyword);
-        results.length 
+        const results = searchTodos(keyword);
+        results.length
           ? displayAllTodos(results, `HASIL PENCARIAN: "${keyword}"`)
-          : console.log(`🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`);
+          : console.log(
+              `🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`
+            );
         break;
+      }
 
-      case '6': // KELUAR
-        console.log("👋 Terima kasih telah menggunakan To-Do App. Sampai jumpa!");
+      case '6': // KELUAR DARI APLIKASI
+        console.log(
+          '👋 Terima kasih telah menggunakan To-Do App. Sampai jumpa!'
+        );
         isRunning = false;
+        rl.close();
         break;
 
       default:
-        console.log("❌ Pilihan tidak valid. Silakan pilih 1-6.");
+        console.log('❌ Pilihan tidak valid. Silakan pilih 1-6.');
     }
   }
-  // readline close
-  rl.close();
 };
 
-// Menjalankan program utama
+// Cleanup readline saat aplikasi ditutup
+process.on('exit', () => {
+  rl.close();
+});
+
+process.on('SIGINT', () => {
+  console.log('\n👋 Terima kasih telah menggunakan To-Do App.');
+  rl.close();
+  process.exit(0);
+});
+
+// Jalankan aplikasi
 mainMenu().catch((err) => {
-  console.error("❌ Terjadi kesalahan sistem:", err);
+  console.error('❌ Terjadi kesalahan sistem:', err);
   process.exit(1);
 });
