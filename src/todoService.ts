@@ -78,7 +78,7 @@ export function toggleTodo(id: string): boolean {
 }
 
 /**
- * Menghapus tugas berdasarkan ID
+ * Menghapus tugas
  */
 export function deleteTodo(id: string): boolean {
   const todos = loadTodos();

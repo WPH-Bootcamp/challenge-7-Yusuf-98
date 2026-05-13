@@ -31,7 +31,6 @@ export function isTodo(item: unknown): item is Todo {
  */
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
-  // Mengambil komponen tanggal dengan bahasa Indonesia
   const datePart = d.toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'short',
@@ -42,7 +41,7 @@ export function formatDate(date: Date | string): string {
   const timePart = d.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
-    hourCycle: 'h23', // Memastikan format 24 jam secara konsisten
+    hourCycle: 'h23', 
   }); 
 
   return `${datePart}, pukul: ${timePart} WIB`;

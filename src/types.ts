@@ -17,7 +17,7 @@ export interface Todo {
   id: string;
   text: string; //Menggunakan 'text' sebagai 'key' sesuai hint
   statusCompleted: TodoStatus;
-  createdAt: string; // Ditambahkan karena ada requirement di utils.ts untuk menampilkan tanggal/waktu dengan format yang bagus
+  createdAt: string; // Ada requirement di utils.ts untuk menampilkan tanggal/waktu dengan format yang bagus
 }
 
 // TODO: Buat tipe untuk status To-Do (active/done)
