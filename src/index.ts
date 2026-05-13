@@ -167,7 +167,7 @@ const mainMenu = async () => {
   }
 };
 
-// Jalankan aplikasi
+// Fungsi untuk menjalankan aplikasi
 mainMenu().catch((err) => {
   console.error('❌ Terjadi kesalahan sistem:', err);
   process.exit(1);
