@@ -62,7 +62,6 @@ const mainMenu = async () => {
     console.log('========================');
 
     const choice = await rl.question('Pilih menu (1-6): ');
-    const currentTodos = loadTodos();
 
     switch (choice) {
       case '1': {
@@ -74,20 +73,24 @@ const mainMenu = async () => {
           console.log('❌ Tugas tidak boleh kosong!');
         }
 
-        addTodo({ text: taskInput });
-        displayAllTodos(); // Menampilkan daftar tugas setelah penambahan
+        if (addTodo({ text: taskInput })) {
+          console.log('✅ Tugas berhasil ditambahkan!');
+          displayAllTodos(); // User bisa langsung melihat hasilnya
+        }
         break;
       }
 
       case '2': // UBAH STATUS TUGAS
       case '3': {
         // HAPUS TUGAS
+        const currentTodos = loadTodos();
+
         if (currentTodos.length === 0) {
           console.log('\n📭 Daftar tugas masih kosong.');
           break;
         }
 
-        displayAllTodos(currentTodos);
+        displayAllTodos(currentTodos); // User bisa memilih tugas mana yang mau di eksekusi
 
         const action =
           choice === '2'
@@ -108,14 +111,19 @@ const mainMenu = async () => {
         if (idx === -1) break;
 
         const selectedId = currentTodos[idx].id;
+        let success = false;
 
         if (choice === '2') {
-          toggleTodo(selectedId);
+          success = toggleTodo(selectedId);
+          if (success) console.log('✅ Status tugas berhasil diubah!');
         } else {
-          deleteTodo(selectedId);
+          success = deleteTodo(selectedId);
+          if (success) console.log('🗑️  Tugas berhasil dihapus!');
         }
 
-        displayAllTodos(); // Menampilkan daftar tugas setelah eksekusi agar user melihat hasilnya
+        if (success) {
+          displayAllTodos(); // User bisa langsung melihat hasilnya
+        }
         break;
       }
 
@@ -153,11 +161,8 @@ const mainMenu = async () => {
   }
 };
 
-// Cleanup readline saat aplikasi ditutup
-process.on('exit', () => {
-  rl.close();
-});
-
+// Cleanup readline
+process.on('exit', () => rl.close());
 process.on('SIGINT', () => {
   console.log('\n👋 Terima kasih telah menggunakan To-Do App.');
   rl.close();

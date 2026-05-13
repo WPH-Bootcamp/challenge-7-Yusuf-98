@@ -41,12 +41,11 @@ const generateId = (): string => {
  * Menambah tugas baru ke dalam daftar dan menyimpannya ke file
  */
 export function addTodo(input: TodoInput): boolean {
-  
   if (!input?.text || !input.text.trim()) {
     console.log('❌ Tugas tidak boleh kosong!');
     return false;
   }
-  // Ambil daftar tugas yang sudah ada dari storage
+
   const todos = loadTodos();
   const newTodo: Todo = {
     id: generateId(),
@@ -54,17 +53,15 @@ export function addTodo(input: TodoInput): boolean {
     statusCompleted: 'active',
     createdAt: new Date().toISOString(),
   };
-  // Menggabungkan data lama dengan data baru dan menyimpannya kembali
+
   saveTodos([...todos, newTodo]);
-  console.log('✅ Tugas berhasil ditambahkan!');
   return true;
 }
 
 /**
- * Mengubah status tugas ('active' <--> 'done'), alasan memakai toggle adalah untuk mengantisipasi jika user salah memilih tugas yang sudah diselesaikan sehingga perlu merubahnya ke 'active' lagi.
+ * Mengubah status tugas ('active' <--> 'done')
  */
 export function toggleTodo(id: string): boolean {
-  // Ambil semua daftar tugas dari storage
   const todos = loadTodos();
   const index = todos.findIndex((t) => t.id === id);
 
@@ -77,13 +74,11 @@ export function toggleTodo(id: string): boolean {
     todos[index].statusCompleted === 'active' ? 'done' : 'active';
 
   saveTodos(todos);
-  const newStatus = todos[index].statusCompleted === 'done' ? '[DONE]' : '[ACTIVE]';
-  console.log(`✅ Status tugas berhasil diubah menjadi ${newStatus}`);
   return true;
 }
 
 /**
- * Menghapus tugas berdasarkan ID, memakai filter karena membuat array baru sehingga cocok untuk menghapus data
+ * Menghapus tugas berdasarkan ID
  */
 export function deleteTodo(id: string): boolean {
   const todos = loadTodos();
@@ -96,32 +91,28 @@ export function deleteTodo(id: string): boolean {
 
   const filtered = todos.filter((t) => t.id !== id);
   saveTodos(filtered);
-
-  const label = todoToDelete.statusCompleted === 'done' ? '[DONE]' : '[ACTIVE]';
-  console.log(`🗑️  Tugas "${todoToDelete.text}" (${label}) berhasil dihapus!`);
   return true;
 }
 
 /**
- * Menampilkan tugas ke terminal
- * Instruksi meminta penambahan label [ACTIVE] atau [DONE] di sini
+ * Menampilkan seluruh daftar tugas
  */
-
 export function displayAllTodos(
-  todos: Todo[] = loadTodos(),
+  todos?: Todo[],
   title: string = 'DAFTAR TUGAS'
 ): void {
   console.log(`\n📋 ${title}:`);
 
-  if (todos.length === 0) {
+  const todosToShow = todos ?? loadTodos();
+
+  if (todosToShow.length === 0) {
     console.log('   (Tidak ada tugas)');
     return;
   }
 
-  todos.forEach((t, i) => {
+  todosToShow.forEach((t, i) => {
     const label = t.statusCompleted === 'done' ? '[DONE]  ' : '[ACTIVE]';
     const timeInfo = formatDate(t.createdAt);
-
     console.log(`${label} ${i + 1}. ${t.text} (Dibuat: ${timeInfo})`);
   });
 }
