@@ -75,6 +75,7 @@ const mainMenu = async () => {
         }
 
         addTodo({ text: taskInput });
+        displayAllTodos(); // Menampilkan daftar tugas setelah penambahan
         break;
       }
 
@@ -91,12 +92,12 @@ const mainMenu = async () => {
         const action =
           choice === '2'
             ? 'diubah statusnya ([ACTIVE] <--> [DONE])'
-            : 'menghapus tugas';
+            : 'dihapus';
 
         const range =
           currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
         const inputNum = await rl.question(
-          `\nPilih nomor ${range} untuk ${action} atau 0 untuk batal: `
+          `\nPilih tugas nomor ${range} untuk ${action} atau 0 untuk batal: `
         );
 
         const idx = parseInt(inputNum) - 1;
@@ -113,6 +114,8 @@ const mainMenu = async () => {
         } else {
           deleteTodo(selectedId);
         }
+
+        displayAllTodos(); // Menampilkan daftar tugas setelah eksekusi agar user melihat hasilnya
         break;
       }
 
