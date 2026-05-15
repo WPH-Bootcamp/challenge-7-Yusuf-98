@@ -68,15 +68,34 @@ const mainMenu = async () => {
         case '1': {
           // TAMBAH TUGAS BARU
           let taskInput = '';
+          let isCancelled = false;
+
           while (true) {
-            taskInput = await rl.question('Masukkan tugas baru: ');
-            if (isValidString(taskInput)) break;
-            console.log('❌ Tugas tidak boleh kosong dan minimal 3 huruf abjad !');
+            console.log('\n--- TAMBAH TUGAS BARU ---');
+            taskInput = await rl.question('Masukkan tugas baru (atau ketik 0 untuk batal): ');
+
+            // Cek jika user ingin membatalkan
+            if (taskInput === '0') {
+              isCancelled = true;
+              break;
+            }
+
+            if (isValidString(taskInput)) {
+              break; // Input valid, keluar dari loop
+            }
+
+            console.log(
+              '❌ Tugas tidak boleh kosong dan minimal mengandung 3 huruf alfabet !'
+            );
           }
 
-          if (addTodo({ text: taskInput })) {
-            console.log('✅ Tugas berhasil ditambahkan!');
-            displayAllTodos(); // User bisa langsung melihat hasilnya
+          if (!isCancelled) {
+            if (addTodo({ text: taskInput })) {
+              console.log('✅ Tugas berhasil ditambahkan!');
+              displayAllTodos(); 
+            }
+          } else {
+            console.log('⚠️  Penambahan tugas dibatalkan.');
           }
           break;
         }
@@ -91,60 +110,79 @@ const mainMenu = async () => {
             break;
           }
 
-          displayAllTodos(currentTodos); // Mempermudah user memilih tugas mana yang mau di eksekusi
+          const actionTitle = choice === '2' ? 'UBAH STATUS TUGAS' : 'HAPUS TUGAS';
+          const actionLabel = choice === '2' ? 'Ubah Status' : 'Hapus';
+          const actionVerb = choice === '2' ? 'diubah statusnya' : 'dihapus';
 
-          const action =
-            choice === '2'
-              ? 'diubah statusnya ([ACTIVE] <--> [DONE])'
-              : 'dihapus';
+          let selectedId = '';
+          
+          // Loop untuk memastikan input nomor tugas benar
+          while (true) {
+            console.log(`\n--- ${actionTitle} ---`);
+            displayAllTodos(currentTodos, `Pilih tugas untuk di-${actionLabel}`);
 
-          const range =
-            currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
-          const inputNum = await rl.question(
-            `\nPilih tugas nomor ${range} untuk ${action} atau 0 untuk batal: `
-          );
+            const range = currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
+            const inputNum = await rl.question(
+              `\nPilih nomor ${range} untuk ${actionVerb} (atau 0 untuk batal): `
+            );
 
-          const idx = parseInt(inputNum) - 1;
-          if (isNaN(idx) || idx < -1 || idx >= currentTodos.length) {
-            console.log('❌ Input harus berupa angka yang tersedia di daftar!');
-            break;
+            const idx = parseInt(inputNum) - 1;
+
+            // Cek jika user ingin membatalkan
+            if (idx === -1) break;
+
+            // Validasi jangkauan angka
+            if (!isNaN(idx) && idx >= 0 && idx < currentTodos.length) {
+              selectedId = currentTodos[idx].id;
+              break; // Input valid, keluar dari loop input
+            }
+
+            console.log(`\n❌ Nomor tidak valid! Silahkan pilih angka antara 1 sampai ${currentTodos.length}.`);
           }
-          if (idx === -1) break;
 
-          const selectedId = currentTodos[idx].id;
-          let success = false;
+          // Jika user tidak memilih batal (selectedId terisi)
+          if (selectedId) {
+            let success = false;
+            if (choice === '2') {
+              success = toggleTodo(selectedId);
+              if (success) console.log('✅ Status tugas berhasil diubah!');
+            } else {
+              success = deleteTodo(selectedId);
+              if (success) console.log('🗑️  Tugas berhasil dihapus!');
+            }
 
-          if (choice === '2') {
-            success = toggleTodo(selectedId);
-            if (success) console.log('✅ Status tugas berhasil diubah!');
-          } else {
-            success = deleteTodo(selectedId);
-            if (success) console.log('🗑️  Tugas berhasil dihapus!');
-          }
-
-          if (success) {
-            displayAllTodos(); // User bisa langsung melihat hasilnya
+            if (success) displayAllTodos();
           }
           break;
         }
 
         case '4': // TAMPILKAN SEMUA TUGAS
+          console.log('\n--- TAMPILKAN SELURUH TUGAS ---');
           displayAllTodos();
           break;
 
         case '5': {
           // CARI TUGAS
-          const keyword = await rl.question('Masukkan kata kunci pencarian: ');
-          if (!isValidString(keyword)) {
-            console.log('❌ Kata kunci tidak boleh kosong.');
-            break;
+          let keyword = '';
+          
+          while (true) {
+            console.log('\n--- CARI TUGAS ---');
+            keyword = await rl.question('Masukkan kata kunci pencarian (atau ketik 0 untuk batal): ');
+
+            // Cek jika user ingin membatalkan
+            if (keyword === '0') break;
+
+            // Validasi minimal 1 karakter (menggunakan trim untuk mengabaikan spasi kosong)
+            if (keyword.trim().length > 0) {
+              const results = searchTodos(keyword);
+              results.length
+                ? displayAllTodos(results, `Hasil pencarian dengan kata kunci: "${keyword}"`)
+                : console.log(`🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`);
+              break; 
+            }
+
+            console.log('❌ Kata kunci tidak boleh kosong!');
           }
-          const results = searchTodos(keyword);
-          results.length
-            ? displayAllTodos(results, `HASIL PENCARIAN: "${keyword}"`)
-            : console.log(
-                `🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`
-              );
           break;
         }
 
@@ -156,7 +194,7 @@ const mainMenu = async () => {
           break;
 
         default:
-          console.log('❌ Pilihan tidak valid. Silakan pilih 1-6.');
+          console.log('❌ Pilihan tidak valid. Silahkan pilih 1-6.');
       }
     }
   } catch (err) {
