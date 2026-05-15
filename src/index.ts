@@ -72,7 +72,9 @@ const mainMenu = async () => {
 
           while (true) {
             console.log('\n--- TAMBAH TUGAS BARU ---');
-            taskInput = await rl.question('Masukkan tugas baru (atau ketik 0 untuk batal): ');
+            taskInput = await rl.question(
+              'Masukkan tugas baru (atau ketik 0 untuk batal): '
+            );
 
             // Cek jika user ingin membatalkan
             if (taskInput === '0') {
@@ -85,14 +87,14 @@ const mainMenu = async () => {
             }
 
             console.log(
-              '❌ Tugas tidak boleh kosong dan minimal mengandung 3 huruf alfabet !'
+              '❌ Tugas tidak boleh kosong dan minimal mengandung 3 huruf alfabet (A-Z).'
             );
           }
 
           if (!isCancelled) {
             if (addTodo({ text: taskInput })) {
               console.log('✅ Tugas berhasil ditambahkan!');
-              displayAllTodos(); 
+              displayAllTodos();
             }
           } else {
             console.log('⚠️  Penambahan tugas dibatalkan.');
@@ -110,21 +112,32 @@ const mainMenu = async () => {
             break;
           }
 
-          const actionTitle = choice === '2' ? 'UBAH STATUS TUGAS' : 'HAPUS TUGAS';
+          const actionTitle =
+            choice === '2' ? 'UBAH STATUS TUGAS' : 'HAPUS TUGAS';
           const actionLabel = choice === '2' ? 'Ubah Status' : 'Hapus';
           const actionVerb = choice === '2' ? 'diubah statusnya' : 'dihapus';
 
           let selectedId = '';
-          
+
           // Loop untuk memastikan input nomor tugas benar
           while (true) {
             console.log(`\n--- ${actionTitle} ---`);
-            displayAllTodos(currentTodos, `Pilih tugas untuk di-${actionLabel}`);
+            displayAllTodos(
+              currentTodos,
+              `Pilih tugas untuk di-${actionLabel}`
+            );
 
-            const range = currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
+            const range =
+              currentTodos.length === 1 ? '(1)' : `(1-${currentTodos.length})`;
             const inputNum = await rl.question(
               `\nPilih nomor ${range} untuk ${actionVerb} (atau 0 untuk batal): `
             );
+
+            // Pastikan input hanya berisi angka sebelum di-parse
+            if (!/^\d+$/.test(inputNum)) {
+              console.log('\n❌ Input harus berupa angka!');
+              continue;
+            }
 
             const idx = parseInt(inputNum) - 1;
 
@@ -137,7 +150,9 @@ const mainMenu = async () => {
               break; // Input valid, keluar dari loop input
             }
 
-            console.log(`\n❌ Nomor tidak valid! Silahkan pilih angka antara 1 sampai ${currentTodos.length}.`);
+            console.log(
+              `\n❌ Nomor tidak valid! Silahkan pilih angka antara 1 sampai ${currentTodos.length}.`
+            );
           }
 
           // Jika user tidak memilih batal (selectedId terisi)
@@ -164,10 +179,12 @@ const mainMenu = async () => {
         case '5': {
           // CARI TUGAS
           let keyword = '';
-          
+
           while (true) {
             console.log('\n--- CARI TUGAS ---');
-            keyword = await rl.question('Masukkan kata kunci pencarian (atau ketik 0 untuk batal): ');
+            keyword = await rl.question(
+              'Masukkan kata kunci pencarian (atau ketik 0 untuk batal): '
+            );
 
             // Cek jika user ingin membatalkan
             if (keyword === '0') break;
@@ -176,9 +193,14 @@ const mainMenu = async () => {
             if (keyword.trim().length > 0) {
               const results = searchTodos(keyword);
               results.length
-                ? displayAllTodos(results, `Hasil pencarian dengan kata kunci: "${keyword}"`)
-                : console.log(`🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`);
-              break; 
+                ? displayAllTodos(
+                    results,
+                    `Hasil pencarian dengan kata kunci: "${keyword}"`
+                  )
+                : console.log(
+                    `🔍 Tidak ditemukan tugas dengan kata kunci "${keyword}".`
+                  );
+              break;
             }
 
             console.log('❌ Kata kunci tidak boleh kosong!');
