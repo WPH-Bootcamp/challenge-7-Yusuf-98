@@ -21,7 +21,7 @@ export interface Todo {
 }
 
 // TODO: Buat tipe untuk status To-Do (active/done)
-export type TodoStatus = 'active' | 'done'; // 
+type TodoStatus = 'active' | 'done'; // 
 
 // TODO: Buat tipe untuk fungsi-fungsi yang akan digunakan
 // TodoInput digunakan saat membuat data baru (tanpa ID, status, dan waktu karena dibuat otomatis)
