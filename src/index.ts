@@ -71,7 +71,7 @@ const mainMenu = async () => {
           while (true) {
             taskInput = await rl.question('Masukkan tugas baru: ');
             if (isValidString(taskInput)) break;
-            console.log('❌ Tugas tidak boleh kosong!');
+            console.log('❌ Tugas tidak boleh kosong dan minimal 3 huruf abjad !');
           }
 
           if (addTodo({ text: taskInput })) {
