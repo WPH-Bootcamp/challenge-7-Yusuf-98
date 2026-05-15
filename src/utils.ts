@@ -7,7 +7,6 @@
 
 // TODO: Buat fungsi untuk memastikan input dari user adalah string yang valid
 
-
 import { Todo } from './types';
 
 /**
@@ -41,8 +40,8 @@ export function formatDate(date: Date | string): string {
   const timePart = d.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
-    hourCycle: 'h23', 
-  }); 
+    hourCycle: 'h23',
+  });
 
   return `${datePart}, pukul: ${timePart} WIB`;
 }
@@ -54,7 +53,7 @@ export function isTodoArray(items: unknown): items is Todo[] {
 }
 
 /**
- * Validasi input string agar tidak kosong atau hanya berisi spasi, 
+ * Validasi input string agar tidak kosong atau hanya berisi spasi,
  * serta minimal 3 huruf alfabet
  */
 export function isValidString(input: unknown): boolean {
