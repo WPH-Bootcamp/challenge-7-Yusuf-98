@@ -54,12 +54,13 @@ export function addTodo(input: TodoInput): boolean {
     createdAt: new Date().toISOString(),
   };
 
-  saveTodos([...todos, newTodo]);
+  saveTodos([newTodo, ...todos]);
   return true;
 }
 
 /**
  * Mengubah status tugas ('active' <--> 'done')
+ * Memilih toggle dibanding completed saja, untuk mengantisipasi kemungkinan user salah pilih tugas
  */
 export function toggleTodo(id: string): boolean {
   const todos = loadTodos();

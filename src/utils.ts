@@ -14,7 +14,7 @@ import { Todo } from './types';
  * Type Guard: Memvalidasi apakah objek adalah Todo yang valid
  * Menggunakan 'unknown' lebih aman daripada 'any' karena memaksa pengecekan tipe
  */
-export function isTodo(item: unknown): item is Todo {
+function isTodo(item: unknown): item is Todo {
   if (typeof item !== 'object' || item === null) return false;
 
   const todo = item as Todo;
@@ -54,8 +54,18 @@ export function isTodoArray(items: unknown): items is Todo[] {
 }
 
 /**
- * Validasi input string agar tidak kosong atau hanya berisi spasi, serta pengaman tambahan jika terjadi gangguan input akan memaksa input menjadi string
+ * Validasi input string agar tidak kosong atau hanya berisi spasi, 
+ * serta minimal 3 huruf alfabet
  */
-export function isValidString (input: unknown): boolean {
-  return typeof input === 'string' && input.trim().length > 0;
-};
+export function isValidString(input: unknown): boolean {
+  if (typeof input !== 'string') {
+    return false;
+  }
+
+  const trimmed = input.trim();
+
+  // Minimal 3 huruf alfabet (a-z A-Z)
+  const alphabeticCount = (trimmed.match(/[a-zA-Z]/g) || []).length;
+
+  return trimmed.length > 0 && alphabeticCount >= 3;
+}
